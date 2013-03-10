@@ -4,10 +4,31 @@ import (
 	"time"
 )
 
+const (
+	DEACTIVATED = iota
+	ACTIVATED
+	INACTIVATED
+)
+
+type NeuronState int
+
+func (ns NeuronState) String() string {
+	switch ns {
+	case DEACTIVATED:
+		return "Deactivated"
+	case ACTIVATED:
+		return "Activated"
+	case INACTIVATED:
+		return "Inactivated"
+	}
+	return "Unknown"
+}
+
 type CellBody struct {
 	// The zero value is used as the resting potential.
 	last_potential float32
 	last_change    time.Time
+	state          NeuronState
 }
 
 // Typically 15mV above the resting potential.
