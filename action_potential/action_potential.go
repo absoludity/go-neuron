@@ -1,4 +1,11 @@
-package neuron
+/*
+	Package action_potential provides an interface and simple
+	implementation of the short-lasting electrical event occuring
+	in neurons.
+
+	http://en.wikipedia.org/wiki/Action_potential
+*/
+package action_potential
 
 import (
 	"fmt"
@@ -27,6 +34,8 @@ const (
 
 type ActivationState int
 
+// An ActionPotential can be deactivated, activated or
+// inactivated.
 const (
 	DEACTIVATED ActivationState = iota
 	ACTIVATED
@@ -45,6 +54,10 @@ func (as ActivationState) String() string {
 	return "Unknown"
 }
 
+// PotentialState stores the data required to determine
+// a potential at a given time (internally the state,
+// the previous potential and the time at which the potential
+// last changed.)
 type PotentialState struct {
 	// The zero value is used as the resting potential.
 	last_potential Potential

@@ -1,4 +1,4 @@
-package neuron
+package action_potential
 
 import (
 	"testing"
@@ -13,12 +13,12 @@ func verify(t *testing.T, testnum int, expected, result PotentialState) {
 
 var (
 	now             = time.Now()
-	before_decay    = now.Add(BINARY_DECAY_DURATION - time.Microsecond)
-	after_decay     = now.Add(BINARY_DECAY_DURATION + time.Microsecond)
-	before_inactive = now.Add(BINARY_ACTIVE_DURATION - time.Microsecond)
-	after_inactive  = now.Add(BINARY_ACTIVE_DURATION + time.Microsecond)
-	before_rest     = now.Add(BINARY_INACTIVE_DURATION - time.Microsecond)
-	after_rest      = now.Add(BINARY_INACTIVE_DURATION + time.Microsecond)
+	before_decay    = now.Add(SIMPLE_DECAY_DURATION - time.Microsecond)
+	after_decay     = now.Add(SIMPLE_DECAY_DURATION + time.Microsecond)
+	before_inactive = now.Add(SIMPLE_ACTIVE_DURATION - time.Microsecond)
+	after_inactive  = now.Add(SIMPLE_ACTIVE_DURATION + time.Microsecond)
+	before_rest     = now.Add(SIMPLE_INACTIVE_DURATION - time.Microsecond)
+	after_rest      = now.Add(SIMPLE_INACTIVE_DURATION + time.Microsecond)
 )
 
 var get_potential_cases = []struct {
@@ -35,7 +35,7 @@ var get_potential_cases = []struct {
 	// An activated cell will remain active for the active duration.
 	{PotentialState{100, now, ACTIVATED}, before_inactive, PotentialState{PEAK_POTENTIAL, now, ACTIVATED}},
 	// An activated cell will be inactive after the active duration.
-	{PotentialState{100, now, ACTIVATED}, after_inactive, PotentialState{REFRACTORY_POTENTIAL, now.Add(BINARY_ACTIVE_DURATION), INACTIVATED}},
+	{PotentialState{100, now, ACTIVATED}, after_inactive, PotentialState{REFRACTORY_POTENTIAL, now.Add(SIMPLE_ACTIVE_DURATION), INACTIVATED}},
 	// An inactivated cell will remain inactivated for the inactive duration.
 	{PotentialState{REFRACTORY_POTENTIAL, now, INACTIVATED}, before_rest, PotentialState{REFRACTORY_POTENTIAL, now, INACTIVATED}},
 	// An inactivated cell will switch back to deactivated after the
@@ -43,14 +43,14 @@ var get_potential_cases = []struct {
 	{
 		PotentialState{REFRACTORY_POTENTIAL, now, INACTIVATED},
 		after_rest,
-		PotentialState{REST_POTENTIAL, now.Add(BINARY_INACTIVE_DURATION),
+		PotentialState{REST_POTENTIAL, now.Add(SIMPLE_INACTIVE_DURATION),
 			DEACTIVATED},
 	},
 }
 
 func TestGetPotentialAt(t *testing.T) {
 	for i, tt := range get_potential_cases {
-		cb := BinaryActionPotential{tt.in}
+		cb := SimpleActionPotential{tt.in}
 
 		actual_potential := cb.GetPotentialAt(tt.at)
 
@@ -117,7 +117,7 @@ var add_potential_cases = []struct {
 		after_inactive,
 		1,
 		REFRACTORY_POTENTIAL, false,
-		PotentialState{REFRACTORY_POTENTIAL, now.Add(BINARY_ACTIVE_DURATION), INACTIVATED},
+		PotentialState{REFRACTORY_POTENTIAL, now.Add(SIMPLE_ACTIVE_DURATION), INACTIVATED},
 	},
 	// An inactivated cell will, after the refractory period, accumulate
 	// again.
@@ -132,7 +132,7 @@ var add_potential_cases = []struct {
 
 func TestAddPotentialAt(t *testing.T) {
 	for i, tt := range add_potential_cases {
-		cb := BinaryActionPotential{tt.initial}
+		cb := SimpleActionPotential{tt.initial}
 
 		actual_potential, fired := cb.AddPotentialAt(tt.in, tt.at)
 

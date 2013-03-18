@@ -1,21 +1,22 @@
 package neuron
 
 import (
+	"github.com/absoludity/go-neuron/action_potential"
 	"testing"
 	"time"
 )
 
 func TestNeuronFire(t *testing.T) {
 	now := time.Now()
-	cb := &BinaryActionPotential{PotentialState{1, now, DEACTIVATED}}
+	cb := action_potential.New(1, now)
 	as := make(ActivationStream, 1)
 	n := &Neuron{Axon{}, as, cb}
 	at := now.Add(time.Microsecond * 5)
 
-	actual_potential := n.AddPotentialAt(THRESHOLD_POTENTIAL, at)
+	actual_potential := n.AddPotentialAt(action_potential.THRESHOLD_POTENTIAL, at)
 
-	if actual_potential != PEAK_POTENTIAL {
-		t.Error("Expected potential:", PEAK_POTENTIAL,
+	if actual_potential != action_potential.PEAK_POTENTIAL {
+		t.Error("Expected potential:", action_potential.PEAK_POTENTIAL,
 			"Actual potential: ", actual_potential)
 	}
 	ae, ok := <-as
@@ -33,7 +34,7 @@ func TestNeuronFire(t *testing.T) {
 
 func TestNeuronNoFire(t *testing.T) {
 	now := time.Now()
-	cb := &BinaryActionPotential{PotentialState{1, now, DEACTIVATED}}
+	cb := action_potential.New(1, now)
 	as := make(ActivationStream, 1)
 	n := &Neuron{Axon{}, as, cb}
 	at := now.Add(time.Microsecond * 5)
