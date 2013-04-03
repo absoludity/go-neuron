@@ -21,6 +21,8 @@ type SimpleActionPotential struct {
 
 // Creates and returns a pointer to an action potential
 // with the given potential at the specified time.
+// Rename (New too general in module scope) and move to unexported
+// test function, if only used there.
 func New(p Potential, t time.Time) ActionPotential {
 	return &SimpleActionPotential{PotentialState{p, t, DEACTIVATED}}
 }

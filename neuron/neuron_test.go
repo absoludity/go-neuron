@@ -10,7 +10,7 @@ func TestNeuronFire(t *testing.T) {
 	now := time.Now()
 	cb := action_potential.New(1, now)
 	as := make(ActivationStream, 1)
-	n := &Neuron{Axon{}, as, cb}
+	n := &Neuron{Axon{}, &as, cb}
 	at := now.Add(time.Microsecond * 5)
 
 	actual_potential := n.AddPotentialAt(action_potential.THRESHOLD_POTENTIAL, at)
@@ -36,7 +36,7 @@ func TestNeuronNoFire(t *testing.T) {
 	now := time.Now()
 	cb := action_potential.New(1, now)
 	as := make(ActivationStream, 1)
-	n := &Neuron{Axon{}, as, cb}
+	n := &Neuron{Axon{}, &as, cb}
 	at := now.Add(time.Microsecond * 5)
 
 	actual_potential := n.AddPotentialAt(5, at)

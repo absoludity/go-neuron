@@ -24,11 +24,27 @@ type ActivationEvent struct {
 // processing.
 type ActivationStream chan ActivationEvent
 
+func (as *ActivationStream) Process() {
+	for {
+		ae := <-*as
+		if ae.Neuron == nil {
+			return
+		}
+		axon := ae.Neuron.Axon
+		for _, n := range axon.Terminals {
+			// Should the potential for each be relative to total
+			// potential, or constant, or divided by the num of terminals?
+			n.AddPotentialAt(5.0, ae.Time.Add(axon.Delay))
+		}
+
+	}
+}
+
 // An Axon can have many terminals connecting to other neurons and
 // an associated delay between the neurons activation and when the
 // signal reaches the terminals.
 type Axon struct {
-	Terminals []Neuron
+	Terminals []action_potential.ActionPotential
 	Delay     time.Duration
 }
 
@@ -37,7 +53,7 @@ type Axon struct {
 // signals are communicated.
 type Neuron struct {
 	Axon             Axon
-	ActivationStream ActivationStream
+	ActivationStream *ActivationStream
 	action_potential.ActionPotential
 }
 
@@ -47,7 +63,7 @@ type Neuron struct {
 func (n *Neuron) AddPotentialAt(p action_potential.Potential, t time.Time) action_potential.Potential {
 	potential, fired := n.ActionPotential.AddPotentialAt(p, t)
 	if fired {
-		n.ActivationStream <- ActivationEvent{t, n}
+		*n.ActivationStream <- ActivationEvent{t, n}
 	}
 	return potential
 }
