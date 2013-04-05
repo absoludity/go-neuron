@@ -13,33 +13,6 @@ import (
 	"time"
 )
 
-// An ActivationEvent records the neuron and time at which it
-// was activated.
-type ActivationEvent struct {
-	Time   time.Time
-	Neuron *Neuron
-}
-
-// An ActivationStream communicates the activation events for further
-// processing.
-type ActivationStream chan ActivationEvent
-
-func (as *ActivationStream) Process() {
-	for {
-		ae := <-*as
-		if ae.Neuron == nil {
-			return
-		}
-		axon := ae.Neuron.Axon
-		for _, n := range axon.Terminals {
-			// Should the potential for each be relative to total
-			// potential, or constant, or divided by the num of terminals?
-			n.AddPotentialAt(5.0, ae.Time.Add(axon.Delay))
-		}
-
-	}
-}
-
 // An Axon can have many terminals connecting to other neurons and
 // an associated delay between the neurons activation and when the
 // signal reaches the terminals.

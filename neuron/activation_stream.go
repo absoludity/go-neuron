@@ -44,59 +44,62 @@ func signalAxonTerminals(a Axon, t time.Time) {
 	}
 }
 
-// checkQueue checks the provided ordered list of terminal events
-// processing any which are ready, and returning the time when the
-// next check should occur.
-func checkQueue(queue *OrderedList) time.Duration {
-	for e := queue.Front(); e != nil; e = e.Next() {
+// processQueue checks the provided ordered list of terminal events
+// processing any which are ready, and returning a timer channel
+// which will receive a time when the queue should be processed
+// next.
+func processQueue(queue *OrderedList) <-chan time.Time {
+	e := queue.Front()
+	for {
+		if e == nil {
+			return nil
+		}
 		te := e.Value.(*TerminalEvent)
 		duration := te.Time.Sub(time.Now())
 		if duration > 0 {
-			return duration
+			return time.NewTimer(duration).C
 		}
+		next := e.Next()
 		queue.Remove(e)
 		signalAxonTerminals(te.Neuron.Axon, te.Time)
+		e = next
 	}
-	return 0
+	return nil
 }
 
+// Process() processing the incoming activation events, by
+// ordering them in a queue and then processing the
+// queue.
 func (as *ActivationStream) Process() {
 	queue := OrderedList{*list.New()}
-	time_ch := make(<-chan time.Time)
-	var ae ActivationEvent
-	var ok bool
-	var next_check_in time.Duration
+	// A nil timer channel will block initially, until we assign an
+	// alarm.
+	var timer_ch <-chan time.Time
+	_as := *as
 	for {
 		select {
-		case ae, ok = <-*as:
-			if !ok {
-				// No more events will be received, but we need
-				// to finish processing the queued events.
-				for {
-					if queue.Len() == 0 {
-						return
-					} else {
-						// Don't really need channel here, as no select
-						// required, switch to simple timer?
-						time_ch = time.NewTimer(next_check_in).C
-					}
-					<-time_ch
-					next_check_in = checkQueue(&queue)
-				}
-			}
-			terminal_event_time := ae.Time.Add(ae.Neuron.Axon.Delay)
-			te := TerminalEvent{terminal_event_time, ae.Neuron}
-			queue.Insert(&te)
-
-			next_check_in = checkQueue(&queue)
-			if next_check_in > 0 {
-				time_ch = time.NewTimer(next_check_in).C
+		case ae, ok := <-_as:
+			if ok {
+				terminal_event_time := ae.Time.Add(ae.Neuron.Axon.Delay)
+				te := TerminalEvent{terminal_event_time, ae.Neuron}
+				queue.Insert(&te)
+			} else {
+				// No more activation events will be received, but we need to
+				// finish processing the queued events. By switching to a nil
+				// activation stream, it'll block and allow the remaining
+				// queue to be processed.
+				_as = nil
 			}
 
-		case <-time_ch:
-			next_check_in := checkQueue(&queue)
-			if next_check_in > 0 {
-				time_ch = time.NewTimer(next_check_in).C
+			timer_ch = processQueue(&queue)
+			if _as == nil && timer_ch == nil {
+				return
+			}
+
+		case <-timer_ch:
+			timer_ch = processQueue(&queue)
+			if _as == nil && timer_ch == nil {
+				return
 			}
 		}
 	}
