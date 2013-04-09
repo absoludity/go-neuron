@@ -1,5 +1,5 @@
 Go Neuron
----------
+=========
 
 go-neuron is a personal experimental library for simulating neurons and
 neural networks.
@@ -13,7 +13,7 @@ activation event on a channel for processing.
 
 
 Action Potentials
-=================
+-----------------
 
 The action-potential interface enables getting the potential (at a specific
 point in time) as well as adding to the potential (at a specific point in time).
@@ -21,7 +21,7 @@ Currently there is only one action potential implementation, the SimpleActionPot
 
 
 Neurons
-=======
+-------
 
 A Neuron is a composition of an action potential and an Axon which carries the
 signal to the terminals (connecting other neurons) with a specified propagation delay.
