@@ -44,9 +44,9 @@ func signalAxonTerminals(a Axon, t time.Time) {
 	}
 }
 
-// processQueue checks the provided ordered list of terminal events
+// processQueue checks the provided queue of terminal events
 // processing any which are ready, and returning a timer channel
-// which will receive a time when the queue should be processed
+// which will receive when the queue should be processed
 // next.
 func processQueue(queue *OrderedList) <-chan time.Time {
 	e := queue.Front()
@@ -69,11 +69,12 @@ func processQueue(queue *OrderedList) <-chan time.Time {
 
 // Process() processing the incoming activation events, by
 // ordering them in a queue and then processing the
-// queue.
+// queue. The function returns after the activation stream
+// is closed and the queue is cleared.
 func (as *ActivationStream) Process() {
 	queue := OrderedList{*list.New()}
 	// A nil timer channel will block initially, until we assign an
-	// alarm.
+	// timer channel.
 	var timer_ch <-chan time.Time
 	_as := *as
 	for {
