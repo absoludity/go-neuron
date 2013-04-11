@@ -22,7 +22,7 @@ func makeNeuronWithTerminal(ap action_potential.ActionPotential, delay time.Dura
 func TestProcess5Simultaneous(t *testing.T) {
 	as := make(ActivationStream, 5)
 	now := time.Now()
-	fake := new(action_potential.FakeEventRecorder)
+	fake := action_potential.NewEventRecorder(new(action_potential.Simple))
 	delays := []time.Duration{
 		1 * time.Millisecond,
 		2 * time.Millisecond,
@@ -52,7 +52,7 @@ func TestProcess5Simultaneous(t *testing.T) {
 func TestOrdersAccordingToDelay(t *testing.T) {
 	as := make(ActivationStream, 2)
 	now := time.Now()
-	fake := new(action_potential.FakeEventRecorder)
+	fake := action_potential.NewEventRecorder(new(action_potential.Simple))
 	delays := []time.Duration{
 		1 * time.Millisecond,
 		2 * time.Millisecond,
