@@ -50,7 +50,7 @@ var get_potential_cases = []struct {
 
 func TestGetPotentialAt(t *testing.T) {
 	for i, tt := range get_potential_cases {
-		cb := SimpleActionPotential{tt.in}
+		cb := Simple{tt.in}
 
 		actual_potential := cb.GetPotentialAt(tt.at)
 
@@ -132,7 +132,7 @@ var add_potential_cases = []struct {
 
 func TestAddPotentialAt(t *testing.T) {
 	for i, tt := range add_potential_cases {
-		cb := SimpleActionPotential{tt.initial}
+		cb := Simple{tt.initial}
 
 		actual_potential, fired := cb.AddPotentialAt(tt.in, tt.at)
 

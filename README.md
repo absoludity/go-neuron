@@ -17,7 +17,7 @@ Action Potentials
 
 The action-potential interface enables getting the potential (at a specific
 point in time) as well as adding to the potential (at a specific point in time).
-Currently there is only one action potential implementation, the SimpleActionPotential.
+Currently there is only one action potential implementation, the Simple.
 
 
 Neurons

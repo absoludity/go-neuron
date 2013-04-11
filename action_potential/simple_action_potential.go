@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// The SimpleActionPotential activates for a duration
+// The Simple activates for a duration
 // when the initial threshold is reached, then
 // is inactive for a duration before switching back to deactivated.
 const (
@@ -13,23 +13,15 @@ const (
 	SIMPLE_INACTIVE_DURATION = 3 * time.Millisecond
 )
 
-// The SimpleActionPotential is a simple implementation of
+// The Simple is a simple implementation of
 // the action potential interface.
-type SimpleActionPotential struct {
+type Simple struct {
 	PotentialState
-}
-
-// Creates and returns a pointer to an action potential
-// with the given potential at the specified time.
-// Rename (New too general in module scope) and move to unexported
-// test function, if only used there.
-func New(p Potential, t time.Time) ActionPotential {
-	return &SimpleActionPotential{PotentialState{p, t, DEACTIVATED}}
 }
 
 // GetPotentialAt determines and returns the potential at a given
 // point in time.
-func (cb *SimpleActionPotential) GetPotentialAt(now time.Time) Potential {
+func (cb *Simple) GetPotentialAt(now time.Time) Potential {
 	switch cb.state {
 	case DEACTIVATED:
 		decay_time := cb.last_change.Add(SIMPLE_DECAY_DURATION)
@@ -57,13 +49,13 @@ func (cb *SimpleActionPotential) GetPotentialAt(now time.Time) Potential {
 
 // GetPotential determines and returns the potential at the time it
 // is called.
-func (cb *SimpleActionPotential) GetPotential() Potential {
+func (cb *Simple) GetPotential() Potential {
 	return cb.GetPotentialAt(time.Now())
 }
 
 // AddPotentialAt adds the specified potential based on the existing
 // potential at the specified time.
-func (cb *SimpleActionPotential) AddPotentialAt(potential Potential, now time.Time) (Potential, bool) {
+func (cb *Simple) AddPotentialAt(potential Potential, now time.Time) (Potential, bool) {
 	prev := cb.last_potential
 	fired := false
 	current_potential := cb.GetPotentialAt(now)
@@ -84,6 +76,6 @@ func (cb *SimpleActionPotential) AddPotentialAt(potential Potential, now time.Ti
 
 // AddPotential adds the specified potential based on the existing
 // potential at the time it is called.
-func (cb *SimpleActionPotential) AddPotential(potential Potential) (Potential, bool) {
+func (cb *Simple) AddPotential(potential Potential) (Potential, bool) {
 	return cb.AddPotentialAt(potential, time.Now())
 }

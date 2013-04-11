@@ -22,7 +22,7 @@ func makeNeuronWithTerminal(ap action_potential.ActionPotential, delay time.Dura
 func TestProcess5Simultaneous(t *testing.T) {
 	as := make(ActivationStream, 5)
 	now := time.Now()
-	fake := action_potential.NewFakeActionPotential()
+	fake := new(action_potential.FakeEventRecorder)
 	delays := []time.Duration{
 		1 * time.Millisecond,
 		2 * time.Millisecond,
@@ -31,20 +31,20 @@ func TestProcess5Simultaneous(t *testing.T) {
 		5 * time.Millisecond,
 	}
 	for _, delay := range delays {
-		as <- ActivationEvent{now, makeNeuronWithTerminal(&fake, delay)}
+		as <- ActivationEvent{now, makeNeuronWithTerminal(fake, delay)}
 	}
 	close(as)
 
 	as.Process()
 
-	if len(fake) != len(delays) {
+	if len(fake.Events) != len(delays) {
 		t.Errorf("Expected %d calls to AddPotential, received %d.",
-			len(delays), len(fake))
+			len(delays), len(fake.Events))
 	}
 	for i, delay := range delays {
 		expected := action_potential.AddPotentialEvent{5, now.Add(delay)}
-		if fake[i] != expected {
-			t.Errorf("Expected %s, got %s.", expected, fake[i])
+		if fake.Events[i] != expected {
+			t.Errorf("Expected %s, got %s.", expected, fake.Events[i])
 		}
 	}
 }
@@ -52,7 +52,7 @@ func TestProcess5Simultaneous(t *testing.T) {
 func TestOrdersAccordingToDelay(t *testing.T) {
 	as := make(ActivationStream, 2)
 	now := time.Now()
-	fake := action_potential.NewFakeActionPotential()
+	fake := new(action_potential.FakeEventRecorder)
 	delays := []time.Duration{
 		1 * time.Millisecond,
 		2 * time.Millisecond,
@@ -60,24 +60,24 @@ func TestOrdersAccordingToDelay(t *testing.T) {
 		4 * time.Millisecond,
 		5 * time.Millisecond,
 	}
-	as <- ActivationEvent{now, makeNeuronWithTerminal(&fake, 5*time.Millisecond)}
-	as <- ActivationEvent{now, makeNeuronWithTerminal(&fake, 1*time.Millisecond)}
+	as <- ActivationEvent{now, makeNeuronWithTerminal(fake, 5*time.Millisecond)}
+	as <- ActivationEvent{now, makeNeuronWithTerminal(fake, 1*time.Millisecond)}
 	close(as)
 
 	as.Process()
 
-	if len(fake) != 2 {
+	if len(fake.Events) != 2 {
 		t.Errorf("Expected 2 calls to AddPotential, received %d.",
-			len(delays), len(fake))
+			len(delays), len(fake.Events))
 	}
 	expected := action_potential.AddPotentialEvent{5, now.Add(1 * time.Millisecond)}
-	if fake[0] != expected {
+	if fake.Events[0] != expected {
 		t.Errorf("Expected first call to be %s, but was %s",
-			expected, fake[0])
+			expected, fake.Events[0])
 	}
 	expected = action_potential.AddPotentialEvent{5, now.Add(5 * time.Millisecond)}
-	if fake[1] != expected {
+	if fake.Events[1] != expected {
 		t.Errorf("Expected second call to be %s, but was %s",
-			expected, fake[1])
+			expected, fake.Events[1])
 	}
 }
