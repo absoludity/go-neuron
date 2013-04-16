@@ -30,11 +30,10 @@ func TestAccuracyAggretator(t *testing.T) {
 		t.Errorf("Expected Count=%d but was %d.", len(delays), accum.Count)
 	}
 	expected_average := average(delays)
-	slop := 1 * time.Millisecond
+	slop := 10 * time.Microsecond
 	if accum.AverageDelta < expected_average-slop ||
 		accum.AverageDelta > expected_average+slop {
 		t.Errorf("Average delta was %s, expected [%s,%s]",
 			accum.AverageDelta, expected_average-slop, expected_average+slop)
 	}
-
 }

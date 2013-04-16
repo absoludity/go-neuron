@@ -81,3 +81,32 @@ func TestOrdersAccordingToDelay(t *testing.T) {
 			expected, fake.Events[1])
 	}
 }
+
+func TestProcessUntilEmpty(t *testing.T) {
+	as := make(ActivationStream, 5)
+	now := time.Now()
+	fake := action_potential.NewEventRecorder(new(action_potential.Simple))
+	delays := []time.Duration{
+		1 * time.Millisecond,
+		2 * time.Millisecond,
+		3 * time.Millisecond,
+		4 * time.Millisecond,
+		5 * time.Millisecond,
+	}
+	for _, delay := range delays {
+		as <- ActivationEvent{now, makeNeuronWithTerminal(fake, delay)}
+	}
+
+	as.ProcessUntilEmpty()
+
+	if len(fake.Events) != len(delays) {
+		t.Errorf("Expected %d calls to AddPotential, received %d.",
+			len(delays), len(fake.Events))
+	}
+	for i, delay := range delays {
+		expected := action_potential.AddPotentialEvent{5, now.Add(delay)}
+		if fake.Events[i] != expected {
+			t.Errorf("Expected %s, got %s.", expected, fake.Events[i])
+		}
+	}
+}

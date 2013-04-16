@@ -33,10 +33,14 @@ type Neuron struct {
 // AddPotentialAt updates the default implementation provided by
 // the embedded ActivationPotential ensuring that any resulting activation
 // is communicated to the stream.
-func (n *Neuron) AddPotentialAt(p action_potential.Potential, t time.Time) action_potential.Potential {
+func (n *Neuron) AddPotentialAt(p action_potential.Potential, t time.Time) (action_potential.Potential, bool) {
 	potential, fired := n.ActionPotential.AddPotentialAt(p, t)
 	if fired {
 		*n.ActivationStream <- ActivationEvent{t, n}
 	}
-	return potential
+	return potential, fired
+}
+
+func (n *Neuron) AddPotential(p action_potential.Potential) (action_potential.Potential, bool) {
+	return n.AddPotentialAt(p, time.Now())
 }

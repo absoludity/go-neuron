@@ -72,6 +72,14 @@ func processQueue(queue *OrderedList) <-chan time.Time {
 // queue. The function returns after the activation stream
 // is closed and the queue is cleared.
 func (as *ActivationStream) Process() {
+	as.process(false)
+}
+
+func (as *ActivationStream) ProcessUntilEmpty() {
+	as.process(true)
+}
+
+func (as *ActivationStream) process(stop_when_empty bool) {
 	queue := OrderedList{*list.New()}
 	// A nil timer channel will block initially, until we assign an
 	// timer channel.
@@ -93,13 +101,13 @@ func (as *ActivationStream) Process() {
 			}
 
 			timer_ch = processQueue(&queue)
-			if _as == nil && timer_ch == nil {
+			if timer_ch == nil && (stop_when_empty || _as == nil) {
 				return
 			}
 
 		case <-timer_ch:
 			timer_ch = processQueue(&queue)
-			if _as == nil && timer_ch == nil {
+			if timer_ch == nil && (stop_when_empty || _as == nil) {
 				return
 			}
 		}

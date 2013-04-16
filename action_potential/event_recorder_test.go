@@ -38,3 +38,43 @@ func TestEventRecorderAddPotentialAt(t *testing.T) {
 		t.Errorf("Expected return value: 6.0, actual %.1f.", actual_potential)
 	}
 }
+
+func TestEventRecorderAddPotential(t *testing.T) {
+	potentials := []Potential{1.0, 2.0, 3.0}
+	fake := NewEventRecorder(new(Simple))
+
+	var (
+		actual_potential Potential
+		fired            bool
+	)
+	start := time.Now()
+	for _, p := range potentials {
+		actual_potential, fired = fake.AddPotential(p)
+	}
+	end := time.Now()
+
+	if len(fake.Events) != 3 {
+		t.Errorf("Expected %d events, received %d.", len(potentials), len(fake.Events))
+	}
+	previous_time := start
+	for i, e := range fake.Events {
+		if e.Potential != potentials[i] {
+			t.Errorf("Expected fake event %s potential to be %s, but was %s.",
+				i, potentials[i], e.Potential)
+		}
+		if e.Time.Before(previous_time) {
+			t.Errorf("Expected fake events to be ordered "+
+				"(event time %s <= previous time: %s", e.Time, previous_time)
+		}
+		previous_time = e.Time
+	}
+	if fake.Events[len(fake.Events)-1].Time.After(end) {
+		t.Errorf("Last event's timestamp is after processing ended.")
+	}
+	if fired {
+		t.Error("Unexpected firing of action potential.")
+	}
+	if actual_potential != 6.0 {
+		t.Errorf("Expected return value: 6.0, actual %.1f.", actual_potential)
+	}
+}

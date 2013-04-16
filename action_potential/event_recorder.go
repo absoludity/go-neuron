@@ -24,3 +24,7 @@ func (f *EventRecorder) AddPotentialAt(p Potential, t time.Time) (Potential, boo
 	f.Events = append(f.Events, AddPotentialEvent{p, t})
 	return f.ActionPotential.AddPotentialAt(p, t)
 }
+
+func (f *EventRecorder) AddPotential(p Potential) (Potential, bool) {
+	return f.AddPotentialAt(p, time.Now())
+}
