@@ -116,6 +116,9 @@ func TestProcessUntilEmpty(t *testing.T) {
 }
 
 func TestActivationStreamAccuracy(t *testing.T) {
+	// Connect 1000 neurons, each with a different axon delay,
+	// all to the one end-point neuron, so that we can accumulate
+	// the accuracy of when the signals reach the end-point.
 	accum := action_potential.NewAccuracyAccumulator(
 		new(action_potential.Simple))
 	activation_stream := make(ActivationStream, 1000)
@@ -131,10 +134,13 @@ func TestActivationStreamAccuracy(t *testing.T) {
 			action_potential.NewAlwaysFirer(new(action_potential.Simple)),
 		}
 	}
+
+	// Fire all 1000 neurons near-simultaneously (note, the difference
+	// in actual firing times won't affect the accuracy which will
+	// be calculated based on when each neuron was fired.)
 	for _, n := range neurons {
 		n.AddPotential(0)
 	}
-
 	activation_stream.ProcessUntilEmpty()
 
 	expected_accuracy := time.Duration(10) * time.Microsecond
