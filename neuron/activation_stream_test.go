@@ -143,7 +143,7 @@ func TestActivationStreamAccuracy(t *testing.T) {
 	}
 	activation_stream.ProcessUntilEmpty()
 
-	expected_accuracy := time.Duration(10) * time.Microsecond
+	expected_accuracy := time.Duration(100) * time.Microsecond
 	if accum.AverageDelta*accum.AverageDelta > expected_accuracy*expected_accuracy {
 		t.Errorf("Expected an accuracy better than %s, but "+
 			"average delta was %s.", expected_accuracy, accum.AverageDelta)
