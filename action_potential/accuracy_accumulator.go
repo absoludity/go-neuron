@@ -19,7 +19,7 @@ func NewAccuracyAccumulator(ap ActionPotential) *AccuracyAccumulator {
 func (f *AccuracyAccumulator) AddPotentialAt(p Potential, t time.Time) (Potential, bool) {
 	now := time.Now()
 	potential, fired := f.ActionPotential.AddPotentialAt(p, t)
-	total_skew := int64(f.AverageDelta)*f.Count + int64(t.Sub(now))
+	total_skew := int64(f.AverageDelta)*f.Count + int64(now.Sub(t))
 	f.Count += 1
 	f.AverageDelta = time.Duration(total_skew / f.Count)
 	return potential, fired

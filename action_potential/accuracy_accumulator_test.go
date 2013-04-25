@@ -23,7 +23,7 @@ func TestAccuracyAggretator(t *testing.T) {
 	accum := NewAccuracyAccumulator(new(Simple))
 
 	for _, delay := range delays {
-		accum.AddPotentialAt(5, time.Now().Add(delay))
+		accum.AddPotentialAt(5, time.Now().Add(-delay))
 	}
 
 	if accum.Count != int64(len(delays)) {

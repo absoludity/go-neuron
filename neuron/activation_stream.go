@@ -50,14 +50,17 @@ func signalAxonTerminals(a Axon, t time.Time) {
 // next.
 func processQueue(queue *OrderedList) <-chan time.Time {
 	e := queue.Front()
+	now := time.Now()
+	// How can the delta vary runtime?
+	delta := time.Duration(130) * time.Microsecond
 	for {
 		if e == nil {
 			return nil
 		}
 		te := e.Value.(*TerminalEvent)
-		duration := te.Time.Sub(time.Now())
-		if duration > 0 {
-			return time.NewTimer(duration).C
+		time_until_next := te.Time.Sub(now)
+		if time_until_next > delta {
+			return time.NewTimer(time_until_next - delta).C
 		}
 		next := e.Next()
 		queue.Remove(e)
