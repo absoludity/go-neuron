@@ -7,6 +7,7 @@ import (
 type AddPotentialEvent struct {
 	Potential Potential
 	Time      time.Time
+	RealTime  time.Time
 }
 
 // An EventRecorder encapsulates an action potential and records
@@ -21,7 +22,7 @@ func NewEventRecorder(ap ActionPotential) *EventRecorder {
 }
 
 func (f *EventRecorder) AddPotentialAt(p Potential, t time.Time) (Potential, bool) {
-	f.Events = append(f.Events, AddPotentialEvent{p, t})
+	f.Events = append(f.Events, AddPotentialEvent{p, t, time.Now()})
 	return f.ActionPotential.AddPotentialAt(p, t)
 }
 

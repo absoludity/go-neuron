@@ -5,9 +5,14 @@ import (
 	"time"
 )
 
+type EventRecorderCase struct {
+	Potential Potential
+	Time      time.Time
+}
+
 func TestEventRecorderAddPotentialAt(t *testing.T) {
 	now = time.Now()
-	events := []AddPotentialEvent{
+	events := []EventRecorderCase{
 		{1.0, now},
 		{2.0, now.Add(time.Microsecond * 1)},
 		{3.0, now.Add(time.Microsecond * 2)},
@@ -26,7 +31,8 @@ func TestEventRecorderAddPotentialAt(t *testing.T) {
 		t.Errorf("Expected %d events, received %d.", len(events), len(fake.Events))
 	}
 	for i, e := range fake.Events {
-		if e != events[i] {
+		if e.Potential != events[i].Potential ||
+			e.Time != events[i].Time {
 			t.Errorf("Expected fake event %s to be %s, but was %s.",
 				i, events[i], e)
 		}

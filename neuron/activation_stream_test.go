@@ -2,20 +2,22 @@ package neuron
 
 import (
 	"github.com/absoludity/go-neuron/action_potential"
+	"math"
 	"testing"
 	"time"
 )
 
 // makeNeuronWithTerminal returns a pointer to a neuron with the given
 // neuron and delay added to the axon terminal.
-func makeNeuronWithTerminal(ap action_potential.ActionPotential, delay time.Duration) *Neuron {
+func makeNeuronWithTerminal(terminal action_potential.ActionPotential,
+	delay time.Duration, as *ActivationStream, ap action_potential.ActionPotential) *Neuron {
 	return &Neuron{
 		Axon{
-			[]action_potential.ActionPotential{ap},
+			[]action_potential.ActionPotential{terminal},
 			delay,
 		},
-		nil,
-		nil,
+		as,
+		ap,
 	}
 }
 
@@ -31,7 +33,7 @@ func TestProcess5Simultaneous(t *testing.T) {
 		5 * time.Millisecond,
 	}
 	for _, delay := range delays {
-		as <- ActivationEvent{now, makeNeuronWithTerminal(fake, delay)}
+		as <- ActivationEvent{now, makeNeuronWithTerminal(fake, delay, nil, nil)}
 	}
 	close(as)
 
@@ -42,9 +44,10 @@ func TestProcess5Simultaneous(t *testing.T) {
 			len(delays), len(fake.Events))
 	}
 	for i, delay := range delays {
-		expected := action_potential.AddPotentialEvent{5, now.Add(delay)}
-		if fake.Events[i] != expected {
-			t.Errorf("Expected %s, got %s.", expected, fake.Events[i])
+		expected_time := now.Add(delay)
+		if fake.Events[i].Time != expected_time {
+			t.Errorf("Expected potential adaded at %s, got %s.",
+				expected_time, fake.Events[i].Time)
 		}
 	}
 }
@@ -60,8 +63,8 @@ func TestOrdersAccordingToDelay(t *testing.T) {
 		4 * time.Millisecond,
 		5 * time.Millisecond,
 	}
-	as <- ActivationEvent{now, makeNeuronWithTerminal(fake, 5*time.Millisecond)}
-	as <- ActivationEvent{now, makeNeuronWithTerminal(fake, 1*time.Millisecond)}
+	as <- ActivationEvent{now, makeNeuronWithTerminal(fake, 5*time.Millisecond, nil, nil)}
+	as <- ActivationEvent{now, makeNeuronWithTerminal(fake, 1*time.Millisecond, nil, nil)}
 	close(as)
 
 	as.Process()
@@ -70,15 +73,15 @@ func TestOrdersAccordingToDelay(t *testing.T) {
 		t.Errorf("Expected 2 calls to AddPotential, received %d.",
 			len(delays), len(fake.Events))
 	}
-	expected := action_potential.AddPotentialEvent{5, now.Add(1 * time.Millisecond)}
-	if fake.Events[0] != expected {
-		t.Errorf("Expected first call to be %s, but was %s",
-			expected, fake.Events[0])
+	expected_time := now.Add(1 * time.Millisecond)
+	if fake.Events[0].Time != expected_time {
+		t.Errorf("Expected first call to be at %s, but was at %s",
+			expected_time, fake.Events[0].Time)
 	}
-	expected = action_potential.AddPotentialEvent{5, now.Add(5 * time.Millisecond)}
-	if fake.Events[1] != expected {
-		t.Errorf("Expected second call to be %s, but was %s",
-			expected, fake.Events[1])
+	expected_time = now.Add(5 * time.Millisecond)
+	if fake.Events[1].Time != expected_time {
+		t.Errorf("Expected second call to be at %s, but was at %s",
+			expected_time, fake.Events[1].Time)
 	}
 }
 
@@ -94,7 +97,7 @@ func TestProcessUntilEmpty(t *testing.T) {
 		5 * time.Millisecond,
 	}
 	for _, delay := range delays {
-		as <- ActivationEvent{now, makeNeuronWithTerminal(fake, delay)}
+		as <- ActivationEvent{now, makeNeuronWithTerminal(fake, delay, nil, nil)}
 	}
 
 	as.ProcessUntilEmpty()
@@ -104,9 +107,10 @@ func TestProcessUntilEmpty(t *testing.T) {
 			len(delays), len(fake.Events))
 	}
 	for i, delay := range delays {
-		expected := action_potential.AddPotentialEvent{5, now.Add(delay)}
-		if fake.Events[i] != expected {
-			t.Errorf("Expected %s, got %s.", expected, fake.Events[i])
+		expected_time := now.Add(delay)
+		if fake.Events[i].Time != expected_time {
+			t.Errorf("Expected at %s, got at %s.",
+				expected_time, fake.Events[i].Time)
 		}
 	}
 }
@@ -141,46 +145,55 @@ func TestActivationStreamAccuracy(t *testing.T) {
 }
 
 func TestActivationStreamDelay(t *testing.T) {
+	// If we string 1000 neurons together, with each axon having the
+	// same axon_delay, then we expect the signal to reach the
+	// final neuron exactly 1000*axon_delay later. We can then check
+	// the variance between when the signal was calculated to reach
+	// the end neuron, and when it really did arrive.
 	activation_stream := make(ActivationStream, 1000)
+	axon_delay := time.Duration(100) * time.Microsecond
+
+	// Create the final end neuron with an event recorder in the
+	// axon terminal.
 	event_recorder := action_potential.NewEventRecorder(
 		new(action_potential.Simple))
-	axon_delay := time.Duration(1) * time.Microsecond
-	end := &Neuron{
-		Axon{
-			[]action_potential.ActionPotential{event_recorder},
-			axon_delay,
-		},
-		&activation_stream,
-		action_potential.NewAlwaysFirer(new(action_potential.Simple)),
-	}
+	always_fire := action_potential.NewAlwaysFirer(new(action_potential.Simple))
+	end := makeNeuronWithTerminal(event_recorder, axon_delay, &activation_stream,
+		always_fire)
 	prev := end
 
-	// A string of neurons together with 1us axon delays.
+	// String the other 999 neurons together.
 	for i := 0; i < 999; i++ {
-		neuron := &Neuron{
-			Axon{
-				[]action_potential.ActionPotential{prev},
-				axon_delay,
-			},
-			&activation_stream,
-			action_potential.NewAlwaysFirer(new(action_potential.Simple)),
-		}
+		always_fire = action_potential.NewAlwaysFirer(new(action_potential.Simple))
+		neuron := makeNeuronWithTerminal(prev, axon_delay,
+			&activation_stream, always_fire)
 		prev = neuron
 	}
 	start := prev
 
+	// Start off the chain reaction then sleep for the expected
+	// duration of the chain of events.
 	started_at := time.Now()
 	start.AddPotentialAt(0, started_at)
 	go activation_stream.Process()
-
-	time.Sleep(axon_delay * 1000)
+	expected_duration := axon_delay * 1000
+	time.Sleep(expected_duration)
 	close(activation_stream)
+
 	if len(event_recorder.Events) != 1 {
 		t.Errorf("Expected 1 event, got %d.", len(event_recorder.Events))
 	}
-
-	delay := event_recorder.Events[0].Time.Sub(started_at)
-	t.Errorf("Delay was %s.", delay)
-	// ^^ Always exactly 1ms as it's the time it should be added, not the time
-	// it was actually added.
+	event := event_recorder.Events[0]
+	duration := event.Time.Sub(started_at)
+	if expected_duration != duration {
+		t.Errorf("Expected duration was %s, actual was %s.",
+			expected_duration, duration)
+	}
+	variance := event.RealTime.Sub(event.Time)
+	percent_of_expected := float64(variance) / float64(expected_duration) * 100
+	tolerance := 0.5
+	if math.Abs(percent_of_expected) > tolerance {
+		t.Errorf("Actual delay was %f%% of expected delay, which is "+
+			"greater than the %f%% tolerance.", percent_of_expected, tolerance)
+	}
 }
